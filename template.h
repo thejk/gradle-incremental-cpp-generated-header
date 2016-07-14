@@ -1,4 +1,4 @@
 
 #define GENERATED "$text"
 
-#error bad
+// #error bad
