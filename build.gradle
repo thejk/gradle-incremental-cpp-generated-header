@@ -1,0 +1,37 @@
+// -*- Mode: groovy; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+apply plugin: 'cpp'
+
+model {
+  binaries {
+    all {
+      cppCompiler.args "-I$buildDir/gen"
+    }
+  }
+  components {
+    test(NativeExecutableSpec) {
+      sources {
+        cpp {
+          source {
+            srcDir "."
+            include "*.cpp"
+          }
+        }
+      }
+    }
+  }
+}
+
+task generateHeader(type: Copy) {
+  into "$buildDir/gen"
+  from(rootProject.file('template.h')) {
+    rename(/template/, 'generated')
+    expand([text: 'foo'])
+  }
+}
+
+tasks.all { task ->
+  def match = task.name =~ /^compile.*Cpp$/
+  if (match) {
+    task.dependsOn generateHeader
+  }
+}
