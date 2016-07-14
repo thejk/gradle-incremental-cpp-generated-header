@@ -33,5 +33,9 @@ tasks.all { task ->
   def match = task.name =~ /^compile.*Cpp$/
   if (match) {
     task.dependsOn generateHeader
+
+    task.inputs.files project.fileTree(dir: "$buildDir/gen").matching {
+      include '*.h'
+    }
   }
 }
