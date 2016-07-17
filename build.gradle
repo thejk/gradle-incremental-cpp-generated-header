@@ -2,40 +2,46 @@
 apply plugin: 'cpp'
 
 model {
-  binaries {
-    all {
-      cppCompiler.args "-I$buildDir/gen"
-    }
-  }
   components {
     test(NativeExecutableSpec) {
       sources {
+        headers(CppSourceSet) {
+          generatedBy tasks.generateHeader
+        }
         cpp {
           source {
             srcDir "."
             include "*.cpp"
           }
+          lib sources.headers
         }
       }
     }
   }
 }
 
-task generateHeader(type: Copy) {
-  into "$buildDir/gen"
-  from(rootProject.file('template.h')) {
-    rename(/template/, 'generated')
-    expand([text: 'foo'])
+class HeaderGenerator extends DefaultTask {
+  @InputFile
+  File template
+  @OutputDirectory
+  File headerDir
+  @OutputDirectory
+  @Optional
+  File sourceDir
+
+  @TaskAction
+  void generate() {
+    project.copy {
+      into headerDir
+      from(template) {
+        rename(/template/, 'generated')
+        expand([text: 'foo'])
+      }
+    }
   }
 }
 
-tasks.all { task ->
-  def match = task.name =~ /^compile.*Cpp$/
-  if (match) {
-    task.dependsOn generateHeader
-
-    task.inputs.files project.fileTree(dir: "$buildDir/gen").matching {
-      include '*.h'
-    }
-  }
+task generateHeader(type: HeaderGenerator) {
+  template rootProject.file('template.h')
+  headerDir project.file("$buildDir/gen")
 }
